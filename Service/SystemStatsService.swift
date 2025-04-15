@@ -29,6 +29,23 @@ struct SystemStatsService {
         return String(data: data, encoding: .utf8)
     }
 
+    
+    // Toplam RAM miktarını al
+    static func getTotalMemoryMB() -> Int? {
+        guard let output = runShellCommand("/usr/sbin/sysctl", arguments: ["-n", "hw.memsize"]) else { return nil }
+
+        if let totalMemoryBytes = Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            return totalMemoryBytes / 1024 / 1024
+        }
+        return nil
+    }
+
+    static func killProcess(pid: Int) {
+         let _ = runShellCommand("/bin/kill", arguments: ["-9", "\(pid)"])
+     }
+    
+    //RAM kullanımı Miktarını al
+    
     static func getUsedMemoryMB() -> Int? {
         guard let output = runShellCommand("/usr/bin/vm_stat") else { return nil }
 
@@ -62,7 +79,7 @@ struct SystemStatsService {
 
 struct ProcessInfoModel: Identifiable {
     let id = UUID()
-    let pid: String
+    let pid: String?
     let command: String
     let memoryMB: String
     let icon: NSImage?
@@ -70,6 +87,7 @@ struct ProcessInfoModel: Identifiable {
 
 extension SystemStatsService {
   
+    // Çalışan uygulamaların bilgilerini al
     static func getRunningAppProcesses(limit: Int = 5) -> [ProcessInfoModel] {
         
         let runningApps = NSWorkspace.shared.runningApplications
@@ -107,7 +125,7 @@ extension SystemStatsService {
             .prefix(limit)
             .map { $0 }
     }
-
+    
     /*
     
     static func getRunningAppProcesses(limit: Int = 5) -> [ProcessInfoModel] {
